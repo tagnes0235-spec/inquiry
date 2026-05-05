@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>탐구 보고서 작성 도우미 — 영생고</title>
+<style>
+:root{
+  --bg:#f9f8f5;
+  --card:#ffffff;
+  --brd:#e3e0d8;
+  --text:#1a1a1a;
+  --muted:#6a6760;
+  --accent:#0d8a8a;
+  --accent-dark:#076e6e;
+  --accent-bg:#e6f4f4;
+  --r:12px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.wrap{max-width:920px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:14px}
+
+/* Header */
+.header{padding:8px 4px}
+.header h1{margin:0 0 6px;font-size:24px;font-weight:700}
+.header p{margin:0;color:var(--muted);font-size:14px}
+
+/* Progress */
+.progress-wrap{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:12px 18px}
+.progress-text{font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:500}
+.progress-bar{background:#eee;height:6px;border-radius:3px;overflow:hidden}
+.progress-fill{background:var(--accent);height:100%;transition:width 0.3s}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 2px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{height:6px}
+.tabs::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+.tab{flex-shrink:0;padding:10px 14px;border:1px solid var(--brd);background:var(--card);border-radius:8px;font-size:13px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap;font-family:inherit}
+.tab:hover{background:#fafaf7}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab.completed:not(.active){border-left:3px solid var(--accent);color:var(--text);padding-left:11px}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:22px 24px;border-left:4px solid var(--accent)}
+.card-title{font-size:18px;font-weight:600;margin:0 0 6px}
+.card-help{color:var(--muted);font-size:14px;margin:0 0 16px}
+.optional-tag{display:inline-block;background:#eee;color:var(--muted);font-size:11px;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:500;vertical-align:middle}
+
+/* Example details */
+.example{background:var(--accent-bg);border-radius:8px;padding:0;margin-bottom:14px;border:1px solid #c5e3e3}
+.example summary{padding:10px 14px;cursor:pointer;font-size:13px;color:var(--accent-dark);font-weight:500;list-style:none;user-select:none}
+.example summary::-webkit-details-marker{display:none}
+.example summary::before{content:"💡 ";margin-right:4px}
+.example summary::after{content:"▼";float:right;font-size:10px;transition:transform 0.2s;margin-top:4px}
+.example[open] summary::after{transform:rotate(180deg)}
+.example .example-body{padding:12px 14px 14px;font-size:13px;color:#333;line-height:1.7;border-top:1px solid #c5e3e3}
+
+/* Form */
+textarea{width:100%;padding:12px 14px;border:1px solid var(--brd);border-radius:8px;font-size:14px;font-family:inherit;line-height:1.6;resize:vertical;min-height:140px;background:#fdfdfb}
+textarea:focus{outline:none;border-color:var(--accent);background:#fff}
+input[type="text"]{width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:8px;font-size:14px;font-family:inherit;background:#fdfdfb}
+input[type="text"]:focus{outline:none;border-color:var(--accent);background:#fff}
+
+/* File entries */
+.file-entry{background:#fafaf7;border:1px solid var(--brd);border-radius:8px;padding:14px;margin-bottom:10px}
+.file-entry-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.file-num{background:var(--accent);color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:8px}
+.file-actions{display:flex;gap:4px}
+.file-btn{background:transparent;border:1px solid var(--brd);border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:13px;color:var(--muted);font-family:inherit}
+.file-btn:hover{background:#fff}
+.file-btn.danger:hover{background:#ffe6e6;color:#c00;border-color:#fcc}
+.file-fields{display:flex;flex-direction:column;gap:8px}
+.file-fields label{font-size:12px;color:var(--muted);font-weight:500;margin-top:4px}
+.file-fields input,.file-fields textarea{font-size:13px}
+.file-fields textarea{min-height:50px}
+
+/* Buttons */
+.btn{padding:10px 18px;border:1px solid var(--brd);background:#fff;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:500}
+.btn:hover{background:#fafaf7}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn-row{display:flex;justify-content:space-between;gap:10px;margin-top:18px;align-items:center}
+.btn-add{background:transparent;border:1px dashed var(--brd);color:var(--muted);width:100%;padding:12px;margin-top:4px}
+.btn-add:hover{background:#fafaf7;border-color:var(--accent);color:var(--accent)}
+
+/* Output */
+.output-card{background:#fff;border:2px solid var(--accent);border-radius:var(--r);padding:22px 24px;margin-top:14px}
+.output-card h3{margin:0 0 6px;color:var(--accent-dark);font-size:17px}
+.output-card .output-help{color:var(--muted);font-size:13px;margin:0 0 14px}
+#finalPrompt{background:#fafaf7;font-size:13px;min-height:300px;line-height:1.7}
+.copy-feedback{display:inline-block;color:var(--accent);font-size:13px;margin-left:6px;opacity:0;transition:opacity 0.2s;font-weight:500}
+.copy-feedback.show{opacity:1}
+
+/* Next steps */
+.next-steps{background:var(--accent-bg);border-radius:8px;padding:14px 18px;margin-top:14px;border:1px solid #c5e3e3}
+.next-steps h4{margin:0 0 10px;color:var(--accent-dark);font-size:14px}
+.next-steps ol{margin:0;padding-left:22px;font-size:13px;line-height:1.9;color:#333}
+.next-steps ol li{padding-left:4px}
+
+/* Footer */
+.footer{text-align:center;padding-top:14px;color:var(--muted);font-size:12px}
+.reset-btn{background:transparent;border:none;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:6px;font-family:inherit}
+.reset-btn:hover{color:#c00}
+.save-status{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic}
+
+/* AI service buttons */
+.ai-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
+.ai-btn{padding:14px 16px;border:1px solid var(--brd);background:#fff;border-radius:8px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s}
+.ai-btn:hover{background:#fafaf7;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 2px 6px rgba(13,138,138,0.1)}
+.ai-btn .ai-name{font-weight:600;font-size:14px;color:var(--text)}
+.ai-btn .ai-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.ai-section-label{font-size:14px;color:var(--text);margin:18px 0 8px;font-weight:600}
+
+/* Hide non-active tabs */
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn 0.2s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:600px){
+  .header h1{font-size:20px}
+  .card{padding:18px 18px}
+  .btn-row{flex-direction:column-reverse}
+  .btn-row .btn{width:100%}
+  .btn-row > span{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>📝 탐구 보고서 작성 도우미</h1>
+    <p>탐구 주제 검색기에서 모은 자료를 정리해서, AI가 탐구 보고서를 잘 작성할 수 있도록 도와드려요</p>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-text" id="progressText">1단계 / 6단계 — 배경 활동</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:17%"></div></div>
+  </div>
+
+  <!-- Tab navigation -->
+  <div class="tabs" id="tabNav">
+    <button class="tab active" onclick="goToTab(1)" data-tab="1">1️⃣ 배경 활동</button>
+    <button class="tab" onclick="goToTab(2)" data-tab="2">2️⃣ 활동 동기</button>
+    <button class="tab" onclick="goToTab(3)" data-tab="3">3️⃣ 탐구 내용</button>
+    <button class="tab" onclick="goToTab(4)" data-tab="4">4️⃣ 관련 정책/도서 등</button>
+    <button class="tab" onclick="goToTab(5)" data-tab="5">5️⃣ 첨부 파일</button>
+    <button class="tab" onclick="goToTab(6)" data-tab="6">✨ 기타 요청사항</button>
+  </div>
+
+  <!-- Tab 1: 배경 활동 -->
+  <div class="tab-content active" id="tab1">
+    <div class="card">
+      <h2 class="card-title">1단계 — 배경 활동</h2>
+      <p class="card-help">이번 탐구가 시작된 수업, 동아리, 학급 활동, 독서 활동 등을 적어주세요. 무엇을 배웠고 무엇을 느꼈는지가 핵심이에요.</p>
+      
+      <details class="example">
+        <summary>예시 보기</summary>
+        <div class="example-body">
+          하루 20분 독서 프로그램 '123 꿈책 독서모임'에 참여하며 마이클 샌델의 『정의란 무엇인가』를 읽음. 공리주의·자유주의·공동체주의로 정의를 분류한 철학적 구조가 현실을 단순화하는 듯 보이지만, 오히려 다양한 관점의 충돌과 한계를 드러내는 전략임을 이해함. '최대 다수의 최대 행복'이 소수의 권리를 희생시킬 수 있다는 점에 주목하여 정의의 기준이 결코 단순하지 않음을 깨닫고, 모둠 구성원들과 벤담·칸트·롤스 등 여러 철학자의 관점을 적용해 윤리적 딜레마에 대해 토론함.
+        </div>
+      </details>
+      
+      <textarea id="background" placeholder="예: 하루 20분 독서 프로그램에 참여하며 ___을(를) 읽음. ___을(를) 통해 ___을(를) 이해하고, 모둠 구성원들과 ___에 대해 토론함..."></textarea>
+      <div class="save-status" id="saveStatus1"></div>
+      
+      <div class="btn-row">
+        <span></span>
+        <button class="btn btn-primary" onclick="goToTab(2)">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: 활동 동기 -->
+  <div class="tab-content" id="tab2">
+    <div class="card">
+      <h2 class="card-title">2단계 — 활동 동기</h2>
+      <p class="card-help">이 주제에 관심을 갖게 된 계기를 적어주세요. 뉴스, 책, 다큐멘터리, 일상 경험, 친구와의 대화… 무엇이든 좋아요.</p>
+      
+      <details class="example">
+        <summary>예시 보기</summary>
+        <div class="example-body">
+          바르셀로나 오버투어리즘 관련 정책 뉴스 기사를 접하고, 오버투어리즘으로 인한 원주민의 정주권·재산권 피해 문제에 관심을 가짐. 우리나라에도 비슷한 사례가 있을지 궁금해져 북촌 한옥마을 사례를 살펴보기로 함.
+        </div>
+      </details>
+      
+      <textarea id="motivation" placeholder="예: ___ 뉴스를 보고 ___에 관심을 가지게 됨. 우리나라에도 비슷한 사례가 있는지 알아보고 싶어짐..."></textarea>
+      
+      <div class="btn-row">
+        <button class="btn" onclick="goToTab(1)">← 이전</button>
+        <button class="btn btn-primary" onclick="goToTab(3)">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: 탐구 내용 -->
+  <div class="tab-content" id="tab3">
+    <div class="card">
+      <h2 class="card-title">3단계 — 탐구 내용</h2>
+      <p class="card-help">자료 조사·분석을 통해 알게 된 내용을 적어주세요. 통계, 사례, 인터뷰 등을 통해 발견한 사실들을 정리해 보세요.</p>
+      
+      <details class="example">
+        <summary>예시 보기</summary>
+        <div class="example-body">
+          자료 조사를 통해 북촌 주민들의 정주권과 재산권에 피해가 있음을 분석함. 관광객 증가로 소음·쓰레기 문제가 심각해지고, 임대료 상승으로 거주민이 떠나는 젠트리피케이션 현상이 발생함. 종로구 등록인구 통계를 살펴본 결과 2020년 이후 ___명에서 ___명으로 감소함.
+        </div>
+      </details>
+      
+      <textarea id="content" placeholder="예: 자료 조사를 통해 ___을 알게 됨. 통계 자료를 분석한 결과 ___이라는 사실을 확인함..."></textarea>
+      
+      <div class="btn-row">
+        <button class="btn" onclick="goToTab(2)">← 이전</button>
+        <button class="btn btn-primary" onclick="goToTab(4)">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: 관련 정책/도서 등 (통합) -->
+  <div class="tab-content" id="tab4">
+    <div class="card">
+      <h2 class="card-title">4단계 — 관련 정책/도서 등 <span class="optional-tag">선택</span></h2>
+      <p class="card-help">탐구 주제와 관련된 정책이나 도서가 있다면 적어주세요. <strong>둘 다 있어도, 하나만 있어도, 없어도</strong> 괜찮아요. 해당 사항이 없는 칸은 비워두시면 됩니다.</p>
+      
+      <details class="example">
+        <summary>예시 보기</summary>
+        <div class="example-body">
+          <strong>📜 관련 정책:</strong> 서울시는 2018년 북촌 한옥마을을 '특별관리지역'으로 지정함. 관광객 출입을 오전 10시부터 오후 5시까지로 제한하고, 단체관광 가이드 등록제, 정숙 관광 캠페인 등 주거지역 보호를 위한 다양한 정책을 시행 중임.<br><br>
+          <strong>📚 관련 도서:</strong> 마이클 샌델 『정의란 무엇인가』 — 공리주의의 한계를 이해하는 데 도움이 됨. 데이비드 하비 『반란의 도시』 — 도시 공간에서 일어나는 권리 갈등을 다룸.
+        </div>
+      </details>
+      
+      <label style="display:block;font-size:13px;color:var(--muted);font-weight:600;margin:8px 0 6px">📜 관련 정책 <span style="color:#aaa;font-weight:400">(있는 경우에만)</span></label>
+      <textarea id="policy" placeholder="예: ___시는 ___년부터 ___ 정책을 시행하고 있음. 주요 내용은 ___..." style="margin-bottom:14px"></textarea>
+      
+      <label style="display:block;font-size:13px;color:var(--muted);font-weight:600;margin:8px 0 6px">📚 관련 도서 <span style="color:#aaa;font-weight:400">(있는 경우에만)</span></label>
+      <textarea id="books" placeholder="예: ___의 『___』 — ___에 대해 다룸..."></textarea>
+      
+      <div class="btn-row">
+        <button class="btn" onclick="goToTab(3)">← 이전</button>
+        <button class="btn btn-primary" onclick="goToTab(5)">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: 첨부 파일 -->
+  <div class="tab-content" id="tab5">
+    <div class="card">
+      <h2 class="card-title">5단계 — 첨부 파일 설명</h2>
+      <p class="card-help">탐구에 사용한 자료들을 순서대로 정리해주세요. <strong>실제 파일은 나중에 Claude에 직접 업로드</strong>하시면 돼요. 여기에는 각 파일이 어떤 자료인지 <em>설명만</em> 적습니다.</p>
+      
+      <details class="example">
+        <summary>예시 보기</summary>
+        <div class="example-body">
+          <strong>1번:</strong> barcelona.pdf — 바르셀로나 오버투어리즘 관련 기사<br>
+          <strong>2번:</strong> bukchon_news.pdf — 북촌 오버투어리즘 관련 기사<br>
+          <strong>3번:</strong> 입장객통계.xlsx — 서울시 주요 관광지점 입장객 통계 <em>(특별 요청: 종로구만 요약할 것)</em><br>
+          <strong>4번:</strong> 등록인구.xlsx — 서울시 종로구 등록인구 <em>(특별 요청: 2020-2025년 추이 비교 정리)</em><br>
+          <strong>5번:</strong> 특별관리지역.pdf — 북촌 특별관리지역 지정 안내문
+        </div>
+      </details>
+      
+      <div id="fileList"></div>
+      <button class="btn btn-add" onclick="addFile()">+ 파일 추가</button>
+      
+      <div class="btn-row">
+        <button class="btn" onclick="goToTab(4)">← 이전</button>
+        <button class="btn btn-primary" onclick="goToTab(6)">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 6: 프롬프트 생성 -->
+  <div class="tab-content" id="tab6">
+    <div class="card">
+      <h2 class="card-title">6단계 — 기타 요청사항 ✨</h2>
+      <p class="card-help">마지막으로 AI에게 추가로 요청하고 싶은 내용을 적고, 아래 버튼을 눌러주세요.</p>
+      
+      <details class="example">
+        <summary>예시 보기</summary>
+        <div class="example-body">
+          • 통계에 대한 구체적인 내용과 자료가 있으면 좋겠어요<br>
+          • 1500자 정도로 작성해주세요<br>
+          • 학생부 기재용으로 객관적인 어조를 유지해주세요<br>
+          • 결론에 본인의 진로 연계 내용을 포함해주세요
+        </div>
+      </details>
+      
+      <textarea id="extra" placeholder="예: 통계에 대한 구체적인 내용과 자료가 있으면 좋겠어요. 1500자 내외로 작성해주세요." style="min-height:90px"></textarea>
+      
+      <div class="btn-row">
+        <button class="btn" onclick="goToTab(5)">← 이전</button>
+        <button class="btn btn-primary" onclick="generatePrompt()">📋 프롬프트 만들기</button>
+      </div>
+    </div>
+    
+    <div class="output-card" id="outputCard" style="display:none">
+      <h3>✅ 완성된 프롬프트</h3>
+      <p class="output-help">아래 내용을 복사해서 Claude.ai에 붙여넣고, 준비한 파일들을 함께 업로드하면 탐구 보고서가 작성됩니다.</p>
+      
+      <textarea id="finalPrompt" readonly></textarea>
+      
+      <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="copyPrompt()">📋 프롬프트 복사하기</button>
+        <span class="copy-feedback" id="copyFeedback">✓ 복사됐어요!</span>
+      </div>
+      
+      <div class="ai-section-label">🤖 어디에 붙여넣을까요? <span style="color:var(--muted);font-weight:400;font-size:12px">(클릭하면 자동 복사 + 새 탭 열림)</span></div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.6">아래 서비스 중 하나를 선택해서 클릭하세요. 자동으로 프롬프트가 복사되고 해당 사이트가 새 탭에 열려요. 채팅창에 붙여넣고 [5단계]에서 정리한 파일도 함께 업로드해주세요.</p>
+      <div class="ai-row">
+        <button class="ai-btn" onclick="openAiService('https://claude.ai')">
+          <div class="ai-name">Claude →</div>
+          <div class="ai-desc">파일 분석 우수, 무료 한도 있음</div>
+        </button>
+        <button class="ai-btn" onclick="openAiService('https://chatgpt.com')">
+          <div class="ai-name">ChatGPT →</div>
+          <div class="ai-desc">가장 친숙함, 무료 사용 가능</div>
+        </button>
+        <button class="ai-btn" onclick="openAiService('https://gemini.google.com')">
+          <div class="ai-name">Gemini →</div>
+          <div class="ai-desc">구글 계정으로 바로 사용</div>
+        </button>
+        <button class="ai-btn" onclick="openAiService('https://wrtn.ai')">
+          <div class="ai-name">뤼튼 →</div>
+          <div class="ai-desc">한국 서비스, 무료</div>
+        </button>
+      </div>
+      
+      <div class="next-steps">
+        <h4>📌 사용 방법 (3단계)</h4>
+        <ol style="margin:0;padding-left:22px;font-size:13px;line-height:1.9;color:#333">
+          <li>위에서 <strong>원하는 AI 서비스</strong>를 클릭하세요. (자동으로 프롬프트가 복사돼요)</li>
+          <li>새 탭에서 열린 AI 채팅창에 <strong>붙여넣기</strong>하세요. (Ctrl+V 또는 ⌘+V)</li>
+          <li>[5단계]에서 정리한 <strong>파일들을 드래그&드롭</strong> 또는 📎 버튼으로 업로드 → 전송 → ✨ 탐구 보고서 완성!</li>
+        </ol>
+        <p style="margin:10px 0 0;font-size:12px;color:var(--muted);line-height:1.6">💡 <strong>Tip:</strong> 무료 사용 시 메시지·파일 업로드 한도가 있을 수 있어요. 한 서비스에서 막히면 다른 서비스를 시도해보세요. 학생들에게는 본인이 평소 쓰는 서비스를 사용하라고 안내하면 됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="reset-btn" onclick="resetAll()">🗑 모든 내용 지우기</button>
+    <div style="margin-top:8px">💾 입력한 내용은 자동으로 저장되어 다음에 다시 열어도 이어서 작성할 수 있어요</div>
+  </div>
+
+</div>
+
+<script>
+const STORAGE_KEY='topic-finder-report-builder-v1';
+const KO_NUMS=['첫번째','두번째','세번째','네번째','다섯번째','여섯번째','일곱번째','여덟번째','아홉번째','열번째','열한번째','열두번째'];
+const TAB_LABELS=['','배경 활동','활동 동기','탐구 내용','관련 정책/도서 등','첨부 파일','기타 요청사항'];
+
+let state={
+  background:'',motivation:'',content:'',policy:'',books:'',extra:'',
+  files:[]
+};
+let currentTab=1;
+let fileIdCounter=0;
+
+// ===== Tab navigation =====
+function goToTab(n){
+  syncStateFromInputs();
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab'+n).classList.add('active');
+  document.querySelector('[data-tab="'+n+'"]').classList.add('active');
+  currentTab=n;
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateProgress(){
+  const pct=(currentTab/6)*100;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressText').textContent=currentTab+'단계 / 6단계 — '+TAB_LABELS[currentTab];
+  
+  document.querySelectorAll('.tab').forEach(el=>{
+    const n=parseInt(el.dataset.tab);
+    if(n<currentTab) el.classList.add('completed');
+    else el.classList.remove('completed');
+  });
+}
+
+// ===== State management =====
+function syncStateFromInputs(){
+  ['background','motivation','content','policy','books','extra'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) state[id]=el.value;
+  });
+  saveToStorage();
+}
+
+function saveToStorage(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}
+}
+
+function loadFromStorage(){
+  try{
+    const saved=localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      const loaded=JSON.parse(saved);
+      state=Object.assign(state,loaded);
+      document.getElementById('background').value=state.background||'';
+      document.getElementById('motivation').value=state.motivation||'';
+      document.getElementById('content').value=state.content||'';
+      document.getElementById('policy').value=state.policy||'';
+      document.getElementById('books').value=state.books||'';
+      document.getElementById('extra').value=state.extra||'';
+      if(state.files && state.files.length>0){
+        state.files.forEach(f=>renderFile(f));
+        return;
+      }
+    }
+  }catch(e){console.warn('Load error:',e);}
+  // Default: start with one empty file entry
+  if(!state.files || state.files.length===0){
+    state.files=[];
+    addFile();
+  }
+}
+
+// ===== File entries =====
+function addFile(){
+  const id='f'+(++fileIdCounter);
+  const file={id:id,name:'',desc:'',special:''};
+  state.files.push(file);
+  renderFile(file);
+  saveToStorage();
+}
+
+function renderFile(file){
+  const wrap=document.createElement('div');
+  wrap.className='file-entry';
+  wrap.id=file.id;
+  wrap.innerHTML=
+    '<div class="file-entry-header">'+
+      '<div><span class="file-num"></span><strong>파일</strong></div>'+
+      '<div class="file-actions">'+
+        '<button class="file-btn" onclick="moveFile(\''+file.id+'\',-1)" title="위로">↑</button>'+
+        '<button class="file-btn" onclick="moveFile(\''+file.id+'\',1)" title="아래로">↓</button>'+
+        '<button class="file-btn danger" onclick="deleteFile(\''+file.id+'\')" title="삭제">×</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="file-fields">'+
+      '<label>파일명 <span style="color:#aaa">(선택)</span></label>'+
+      '<input type="text" placeholder="예: barcelona_news.pdf" value="'+escapeHtml(file.name)+'" oninput="updateFile(\''+file.id+'\',\'name\',this.value)">'+
+      '<label>이 파일은 어떤 자료인가요?</label>'+
+      '<input type="text" placeholder="예: 바르셀로나 오버투어리즘 관련 기사" value="'+escapeHtml(file.desc)+'" oninput="updateFile(\''+file.id+'\',\'desc\',this.value)">'+
+      '<label>AI에게 특별히 요청할 내용 <span style="color:#aaa">(선택)</span></label>'+
+      '<textarea placeholder="예: 종로구 데이터만 요약해서 사용해주세요" oninput="updateFile(\''+file.id+'\',\'special\',this.value)">'+escapeHtml(file.special)+'</textarea>'+
+    '</div>';
+  document.getElementById('fileList').appendChild(wrap);
+  renumberFiles();
+}
+
+function updateFile(id,field,value){
+  const f=state.files.find(x=>x.id===id);
+  if(f){f[field]=value;saveToStorage();}
+}
+
+function deleteFile(id){
+  if(state.files.length<=1){
+    // Just clear the fields instead of deleting the only entry
+    const f=state.files[0];
+    if(f){f.name='';f.desc='';f.special='';}
+    document.getElementById('fileList').innerHTML='';
+    if(f) renderFile(f);
+    saveToStorage();
+    return;
+  }
+  if(!confirm('이 파일 항목을 삭제할까요?'))return;
+  state.files=state.files.filter(x=>x.id!==id);
+  document.getElementById(id).remove();
+  renumberFiles();
+  saveToStorage();
+}
+
+function moveFile(id,dir){
+  const idx=state.files.findIndex(x=>x.id===id);
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=state.files.length)return;
+  const tmp=state.files[idx];
+  state.files[idx]=state.files[newIdx];
+  state.files[newIdx]=tmp;
+  document.getElementById('fileList').innerHTML='';
+  state.files.forEach(f=>renderFile(f));
+  saveToStorage();
+}
+
+function renumberFiles(){
+  const entries=document.querySelectorAll('.file-entry');
+  entries.forEach((el,i)=>{
+    el.querySelector('.file-num').textContent=(i+1);
+  });
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== Generate prompt =====
+function generatePrompt(){
+  syncStateFromInputs();
+  
+  let p='저는 탐구 보고서를 작성하고자 합니다. 아래 내용과 첨부 파일을 참고해주세요.\n\n';
+  let sectionNum=1;
+  
+  if(state.background.trim()){
+    p+=sectionNum+'. 배경 활동:\n'+state.background.trim()+'\n\n';
+    sectionNum++;
+  }
+  if(state.motivation.trim()){
+    p+=sectionNum+'. 활동 동기:\n'+state.motivation.trim()+'\n\n';
+    sectionNum++;
+  }
+  if(state.content.trim()){
+    p+=sectionNum+'. 탐구 내용:\n'+state.content.trim()+'\n\n';
+    sectionNum++;
+  }
+  if(state.policy.trim()){
+    p+=sectionNum+'. 관련 정책:\n'+state.policy.trim()+'\n\n';
+    sectionNum++;
+  }
+  if(state.books.trim()){
+    p+=sectionNum+'. 관련 도서:\n'+state.books.trim()+'\n\n';
+    sectionNum++;
+  }
+  
+  // Files
+  const validFiles=state.files.filter(f=>(f.desc||'').trim()||(f.name||'').trim());
+  if(validFiles.length>0){
+    p+='**업로드 파일 설명:\n';
+    validFiles.forEach((f,i)=>{
+      const num=KO_NUMS[i]||((i+1)+'번째');
+      let line=num+' 파일';
+      if((f.name||'').trim()) line+=' ('+f.name.trim()+')';
+      line+=': ';
+      if((f.desc||'').trim()) line+=f.desc.trim();
+      else line+='(설명 없음)';
+      if((f.special||'').trim()) line+=' (※ '+f.special.trim()+')';
+      p+=line+'\n';
+    });
+    p+='\n';
+  }
+  
+  p+='위 자료와 내용들을 참고해서 탐구 보고서를 작성해주세요.';
+  if(state.extra.trim()) p+=' '+state.extra.trim();
+  
+  document.getElementById('finalPrompt').value=p;
+  document.getElementById('outputCard').style.display='block';
+  setTimeout(()=>{
+    document.getElementById('outputCard').scrollIntoView({behavior:'smooth',block:'start'});
+  },50);
+}
+
+function copyPrompt(){
+  const ta=document.getElementById('finalPrompt');
+  ta.select();
+  ta.setSelectionRange(0,99999);
+  
+  const fallback=()=>{
+    try{document.execCommand('copy');showCopyFeedback();}
+    catch(e){alert('복사 실패! 수동으로 텍스트를 선택하고 Ctrl+C를 눌러주세요.');}
+  };
+  
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(showCopyFeedback).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+function showCopyFeedback(){
+  const fb=document.getElementById('copyFeedback');
+  fb.classList.add('show');
+  setTimeout(()=>fb.classList.remove('show'),2000);
+}
+
+function resetAll(){
+  if(!confirm('모든 입력 내용이 사라져요. 정말 지우시겠어요?'))return;
+  try{localStorage.removeItem(STORAGE_KEY);}catch(e){}
+  location.reload();
+}
+
+// ===== Open AI service with auto-copy =====
+function openAiService(url){
+  const ta=document.getElementById('finalPrompt');
+  const text=ta?ta.value:'';
+  
+  // Open the AI service in a new tab first (must be synchronous to avoid popup blocking)
+  window.open(url,'_blank');
+  
+  // Then copy the prompt
+  if(text){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=>{
+        const fb=document.getElementById('copyFeedback');
+        if(fb){fb.classList.add('show');setTimeout(()=>fb.classList.remove('show'),2500);}
+      }).catch(()=>{
+        // Fallback
+        ta.select();ta.setSelectionRange(0,99999);
+        try{document.execCommand('copy');}catch(e){}
+      });
+    }else{
+      ta.select();ta.setSelectionRange(0,99999);
+      try{document.execCommand('copy');}catch(e){}
+    }
+  }
+}
+
+// ===== Init =====
+window.addEventListener('load',()=>{
+  loadFromStorage();
+  
+  ['background','motivation','content','policy','books','extra'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.addEventListener('input',()=>{
+        state[id]=el.value;
+        saveToStorage();
+      });
+    }
+  });
+  
+  updateProgress();
+});
+</script>
+</body>
+</html>
